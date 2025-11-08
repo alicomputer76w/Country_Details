@@ -1,0 +1,105 @@
+:root {
+  --bg: #0b0e12;
+  --card: #12161c;
+  --text: #e6edf3;
+  --muted: #9aa7b3;
+  --primary: #4f8cff;
+  --accent: #22c55e;
+  --danger: #ef4444;
+  --border: #1f2732;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.container { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+
+.site-header {
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0; background: var(--bg); z-index: 10;
+}
+.header-inner { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand-logo { font-size: 24px; }
+.brand-title { font-size: 18px; margin: 0; }
+
+.actions { display: flex; gap: 8px; align-items: center; }
+.btn { background: var(--primary); color: white; border: none; padding: 10px 14px; border-radius: 8px; cursor: pointer; }
+.btn:hover { filter: brightness(1.1); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.btn-link { background: transparent; text-decoration: none; color: var(--primary); padding: 8px; }
+
+.label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 14px; }
+.select, .input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: #0f1318; color: var(--text); }
+header .select { width: auto; }
+
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+.card + .card { margin-top: 18px; }
+.card-title { margin-top: 0; font-size: 18px; }
+
+.grid { display: grid; }
+.two-col { grid-template-columns: 1fr; }
+.gap { gap: 16px; }
+@media (min-width: 900px) { .two-col { grid-template-columns: 1fr 1fr; } }
+
+.search-card { margin-top: 18px; }
+.search-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 640px) { .search-grid { grid-template-columns: 1fr auto; align-items: end; } }
+
+.overview { display: grid; grid-template-columns: 100px 1fr; gap: 16px; }
+.flag { width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--border); }
+.country-name { margin: 0; font-size: 22px; }
+.info-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+.info-list dt { color: var(--muted); font-size: 13px; }
+.info-list dd { margin: 0; }
+
+.gender-stats { display: grid; gap: 16px; }
+.stat { display: grid; gap: 8px; }
+.stat-header { display: flex; align-items: baseline; justify-content: space-between; }
+.bar { background: #0f1318; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; height: 14px; }
+.bar-fill { height: 100%; }
+.bar-fill.female { background: var(--accent); }
+.bar-fill.male { background: #3b82f6; }
+
+.list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.list li { border: 1px dashed var(--border); border-radius: 10px; padding: 10px; }
+.list a { color: var(--primary); text-decoration: none; }
+.list a:hover { text-decoration: underline; }
+
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+
+.loading { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(11,14,18,0.6); backdrop-filter: blur(2px); }
+.spinner { width: 26px; height: 26px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--primary); animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.site-footer { border-top: 1px solid var(--border); margin-top: 30px; }
+.site-footer .container { padding: 14px 0; text-align: center; }
+
+/* Map */
+.map { width: 100%; height: 320px; border: 1px solid var(--border); border-radius: 10px; }
+.leaflet-container { background: #0f1318; }
+
+/* Modal */
+.modal { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); z-index: 50; }
+.modal-card { max-width: 640px; width: calc(100% - 40px); }
+
+/* Light theme (toggled) */
+.light {
+  --bg: #f6f7fb;
+  --card: #ffffff;
+  --text: #0b0e12;
+  --muted: #5b6673;
+  --primary: #2563eb;
+  --accent: #16a34a;
+  --danger: #dc2626;
+  --border: #e5e7eb;
+}
