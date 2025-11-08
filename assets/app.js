@@ -365,11 +365,12 @@ function bindEvents() {
   }
 }
 
-function init() {
+async function init() {
   els.year.textContent = new Date().getFullYear();
   bindEvents();
   if (els.langSelect) setLanguage(els.langSelect.value || 'en');
-  loadCountries();
+  // Ensure countries are loaded before first interaction
+  await loadCountries();
 }
 
 document.addEventListener('DOMContentLoaded', init);
