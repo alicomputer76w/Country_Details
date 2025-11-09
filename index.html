@@ -24,7 +24,6 @@
           <a class="btn btn-link" href="#about" id="linkAbout">About</a>
           <button id="exportCsvBtn" class="btn btn-ghost" aria-label="Export CSV">CSV ⬇️</button>
           <button id="exportPdfBtn" class="btn btn-ghost" aria-label="Export PDF">PDF ⬇️</button>
-          <button id="bulkExportOpen" class="btn btn-ghost" aria-label="Bulk Export">Bulk ⬇️</button>
           <select id="langSelect" class="select" aria-label="Language">
             <option value="en" selected>English</option>
             <option value="ur">اردو</option>
@@ -35,137 +34,30 @@
     </header>
 
     <main class="container">
-      <section class="card search-card" aria-label="Country selection">
-        <div class="search-grid">
+      <!-- All Countries view -->
+      <section class="card search-card" aria-label="All countries">
+        <h2 class="card-title" id="titleAllCountries">All Countries</h2>
+        <div class="search-grid" style="margin-top:8px">
           <div>
-            <label for="countrySelect" class="label" id="labelSelectCountry">Select Country</label>
-            <select id="countrySelect" class="select" aria-describedby="countryHelp">
-              <option value="" selected disabled>Loading countries…</option>
+            <label for="countryFilter" class="label" id="labelCountryFilter">Filter</label>
+            <input id="countryFilter" class="input" placeholder="Type to filter by name, capital, or region…" />
+          </div>
+          <div>
+            <label for="countrySort" class="label" id="labelCountrySort">Sort</label>
+            <select id="countrySort" class="select">
+              <option value="name_asc" selected>Name (A-Z)</option>
+              <option value="name_desc">Name (Z-A)</option>
+              <option value="population_desc">Population (high → low)</option>
+              <option value="population_asc">Population (low → high)</option>
+              <option value="area_desc">Area (high → low)</option>
+              <option value="area_asc">Area (low → high)</option>
             </select>
-            <p id="countryHelp" class="muted">Bs country select krain, aur sari public details yahan aa jayengi.</p>
           </div>
           <div class="search-actions">
             <button id="refreshBtn" class="btn">Refresh Data</button>
           </div>
         </div>
-      </section>
-
-      <section class="grid two-col gap" id="detailsGrid" hidden>
-        <div class="card" id="overviewCard" aria-live="polite">
-          <h2 class="card-title" id="titleOverview">Overview</h2>
-          <div class="overview">
-            <img id="flagImg" alt="Country flag" class="flag" />
-            <div class="overview-info">
-              <h3 id="countryName" class="country-name"></h3>
-              <dl class="info-list">
-                <div><dt>Capital</dt><dd id="capital"></dd></div>
-                <div><dt>Region</dt><dd id="region"></dd></div>
-                <div><dt>Subregion</dt><dd id="subregion"></dd></div>
-                <div><dt>Population</dt><dd id="population"></dd></div>
-                <div><dt>Area</dt><dd id="area"></dd></div>
-                <div><dt>Languages</dt><dd id="languages"></dd></div>
-                <div><dt>Currencies</dt><dd id="currencies"></dd></div>
-                <div><dt>Country Code</dt><dd id="code"></dd></div>
-              </dl>
-            </div>
-          </div>
-        </div>
-
-        <div class="card" id="genderCard">
-          <h2 class="card-title" id="titleGender">Population by Gender</h2>
-          <div id="genderStatus" class="muted">Fetching gender data…</div>
-          <div class="gender-stats" id="genderStats" hidden>
-            <div class="stat">
-              <div class="stat-header">
-                <span>Female</span>
-                <strong id="femaleCount">—</strong>
-              </div>
-              <div class="bar">
-                <div id="femaleBar" class="bar-fill female" style="width:0%"></div>
-              </div>
-            </div>
-            <div class="stat">
-              <div class="stat-header">
-                <span>Male</span>
-                <strong id="maleCount">—</strong>
-              </div>
-              <div class="bar">
-                <div id="maleBar" class="bar-fill male" style="width:0%"></div>
-              </div>
-            </div>
-            <p class="muted" id="genderYear"></p>
-          </div>
-        </div>
-
-        <div class="card" id="institutionsCard">
-          <h2 class="card-title" id="titleInstitutions">Institutions (Universities)</h2>
-          <div class="search-grid" style="margin-top:8px">
-            <div>
-              <label for="instSearch" class="label" id="labelInstSearch">Search institutions</label>
-              <input id="instSearch" class="input" placeholder="Type name or domain…" />
-            </div>
-            <div>
-              <label for="instCity" class="label" id="labelInstCity">Filter by city/province</label>
-              <input id="instCity" class="input" placeholder="City / State-Province" />
-            </div>
-            <div>
-              <label for="instSort" class="label" id="labelInstSort">Sort</label>
-              <select id="instSort" class="select">
-                <option value="name_asc" selected>Name (A-Z)</option>
-                <option value="name_desc">Name (Z-A)</option>
-              </select>
-            </div>
-            <div>
-              <label for="instTld" class="label" id="labelInstTld">Filter by domain TLD</label>
-              <select id="instTld" class="select">
-                <option value="all" selected>All</option>
-                <option value=".edu">.edu</option>
-                <option value=".ac">.ac</option>
-                <option value=".gov">.gov</option>
-                <option value=".org">.org</option>
-                <option value=".net">.net</option>
-              </select>
-            </div>
-          </div>
-          <div id="instStatus" class="muted">Fetching institutions…</div>
-          <ul id="instList" class="list" hidden></ul>
-          <div id="instPager" class="pager" style="display:flex; gap:8px; align-items:center" hidden>
-            <button id="instPagePrev" class="btn btn-ghost">Prev</button>
-            <span id="instPageInfo" class="muted"></span>
-            <button id="instPageNext" class="btn btn-ghost">Next</button>
-          </div>
-        </div>
-
-        <div class="card" id="hospitalsCard">
-          <h2 class="card-title" id="titleHospitals">Hospitals & Health Facilities</h2>
-          <div id="hospStatus" class="muted">Best-effort data from public sources.</div>
-          <div class="muted small">Note: Aik single global API for hospital counts har country ke liye available nahi hota. Hum verified public sources se links provide karte hain. Country-specific ministry/WHO pages dekhain.</div>
-          <ul id="hospList" class="list"></ul>
-        </div>
-
-        <div class="card" id="healthCard">
-          <h2 class="card-title" id="titleHealth">Health Indicators</h2>
-          <div id="healthStatus" class="muted">Fetching health data…</div>
-          <ul id="healthList" class="list" hidden></ul>
-        </div>
-
-        <div class="card" id="economicCard">
-          <h2 class="card-title" id="titleEconomic">Economic Indicators</h2>
-          <div id="econStatus" class="muted">Fetching economic data…</div>
-          <ul id="econList" class="list" hidden></ul>
-        </div>
-
-        <div class="card" id="educationCard">
-          <h2 class="card-title" id="titleEducation">Education Metrics</h2>
-          <div id="eduStatus" class="muted">Fetching education data…</div>
-          <ul id="eduList" class="list" hidden></ul>
-        </div>
-
-        <div class="card" id="mapCard">
-          <h2 class="card-title" id="titleMap">Map View</h2>
-          <div id="mapStatus" class="muted">Loading map…</div>
-          <div id="map" class="map" aria-label="Country map"></div>
-        </div>
+        <ul id="countriesList" class="list" style="margin-top:12px"></ul>
       </section>
 
       <section class="card" id="about">
@@ -180,19 +72,7 @@
         <p class="muted">Data availability varies per country. If koi data missing ho, we show a friendly message instead of failing.</p>
       </section>
 
-      <div id="bulkPanel" class="modal" hidden>
-        <div class="card modal-card">
-          <h2 class="card-title" id="titleBulkExport">Bulk Export</h2>
-          <p class="muted" id="descBulkExport">Select multiple countries to export overview details.</p>
-          <label for="bulkSelect" class="label" id="labelBulkSelect">Choose countries</label>
-          <select id="bulkSelect" class="select" multiple size="8"></select>
-          <div style="display:flex; gap:8px; margin-top:12px">
-            <button id="bulkCsvBtn" class="btn">Export CSV</button>
-            <button id="bulkPdfBtn" class="btn">Export PDF</button>
-            <button id="bulkClose" class="btn btn-ghost">Close</button>
-          </div>
-        </div>
-      </div>
+      <!-- Bulk panel removed per new design: all-country view -->
 
       <div id="loading" class="loading" hidden>
         <div class="spinner" aria-hidden="true"></div>

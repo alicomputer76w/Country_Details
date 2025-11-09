@@ -2,6 +2,11 @@
 // Data sources: REST Countries, World Bank, Hipolabs Universities, WHO/Ministry links
 
 const els = {
+  // all-countries view
+  countriesList: document.getElementById('countriesList'),
+  countryFilter: document.getElementById('countryFilter'),
+  countrySort: document.getElementById('countrySort'),
+  // legacy (may be absent after redesign)
   countrySelect: document.getElementById('countrySelect'),
   refreshBtn: document.getElementById('refreshBtn'),
   themeToggle: document.getElementById('themeToggle'),
@@ -83,6 +88,10 @@ const els = {
   titleBulkExport: document.getElementById('titleBulkExport'),
   descBulkExport: document.getElementById('descBulkExport'),
   labelBulkSelect: document.getElementById('labelBulkSelect'),
+  // new labels
+  titleAllCountries: document.getElementById('titleAllCountries'),
+  labelCountryFilter: document.getElementById('labelCountryFilter'),
+  labelCountrySort: document.getElementById('labelCountrySort'),
 };
 
 const CACHE_TTL_MS = 1000 * 60 * 60 * 24; // 24h
@@ -98,6 +107,20 @@ const state = {
   institutionsPage: 1,
   institutionsPageSize: 50,
 };
+
+// Minimal offline fallback list to ensure UI remains functional without network
+const OFFLINE_COUNTRIES = [
+  { name: 'Pakistan', officialName: 'Islamic Republic of Pakistan', cca3: 'PAK', capital: 'Islamabad', region: 'Asia', subregion: 'Southern Asia', population: 240000000, area: 881912, currencies: { PKR: { name: 'Pakistani rupee', symbol: '₨' } }, languages: { urd: 'Urdu' } },
+  { name: 'India', officialName: 'Republic of India', cca3: 'IND', capital: 'New Delhi', region: 'Asia', subregion: 'Southern Asia', population: 1410000000, area: 3287263, currencies: { INR: { name: 'Indian rupee', symbol: '₹' } }, languages: { hin: 'Hindi', eng: 'English' } },
+  { name: 'Bangladesh', officialName: 'People\'s Republic of Bangladesh', cca3: 'BGD', capital: 'Dhaka', region: 'Asia', subregion: 'Southern Asia', population: 171000000, area: 147570, currencies: { BDT: { name: 'Taka', symbol: '৳' } }, languages: { ben: 'Bengali' } },
+  { name: 'United States', officialName: 'United States of America', cca3: 'USA', capital: 'Washington D.C.', region: 'Americas', subregion: 'North America', population: 333000000, area: 9372610, currencies: { USD: { name: 'United States dollar', symbol: '$' } }, languages: { eng: 'English' } },
+  { name: 'United Kingdom', officialName: 'United Kingdom of Great Britain and Northern Ireland', cca3: 'GBR', capital: 'London', region: 'Europe', subregion: 'Northern Europe', population: 67000000, area: 242495, currencies: { GBP: { name: 'Pound sterling', symbol: '£' } }, languages: { eng: 'English' } },
+  { name: 'Canada', officialName: 'Canada', cca3: 'CAN', capital: 'Ottawa', region: 'Americas', subregion: 'North America', population: 39000000, area: 9984670, currencies: { CAD: { name: 'Canadian dollar', symbol: '$' } }, languages: { eng: 'English', fra: 'French' } },
+  { name: 'Australia', officialName: 'Commonwealth of Australia', cca3: 'AUS', capital: 'Canberra', region: 'Oceania', subregion: 'Australia and New Zealand', population: 26000000, area: 7692024, currencies: { AUD: { name: 'Australian dollar', symbol: '$' } }, languages: { eng: 'English' } },
+  { name: 'China', officialName: 'People\'s Republic of China', cca3: 'CHN', capital: 'Beijing', region: 'Asia', subregion: 'Eastern Asia', population: 1410000000, area: 9706961, currencies: { CNY: { name: 'Renminbi', symbol: '¥' } }, languages: { zho: 'Chinese' } },
+  { name: 'Germany', officialName: 'Federal Republic of Germany', cca3: 'DEU', capital: 'Berlin', region: 'Europe', subregion: 'Western Europe', population: 84000000, area: 357114, currencies: { EUR: { name: 'Euro', symbol: '€' } }, languages: { deu: 'German' } },
+  { name: 'France', officialName: 'French Republic', cca3: 'FRA', capital: 'Paris', region: 'Europe', subregion: 'Western Europe', population: 68000000, area: 551695, currencies: { EUR: { name: 'Euro', symbol: '€' } }, languages: { fra: 'French' } },
+];
 
 function setLoading(show) {
   els.loading.hidden = !show;
@@ -132,7 +155,7 @@ async function loadCountries() {
   const cached = getFromCache(cacheKey);
   if (cached) {
     state.countries = cached;
-    populateCountrySelect(cached);
+    renderAllCountries();
     return;
   }
   setLoading(true);
@@ -154,18 +177,53 @@ async function loadCountries() {
     })).sort((a, b) => a.name.localeCompare(b.name));
     state.countries = cleaned;
     saveToCache(cacheKey, cleaned);
-    populateCountrySelect(cleaned);
+    renderAllCountries();
   } catch (e) {
     console.error(e);
-    els.countrySelect.innerHTML = '<option disabled selected>Failed to load countries. Retry.</option>';
+    // Use offline fallback to keep UI usable
+    state.countries = OFFLINE_COUNTRIES;
+    renderAllCountries();
   } finally {
     setLoading(false);
   }
 }
 
-function populateCountrySelect(list) {
-  els.countrySelect.innerHTML = '<option value="" disabled selected>Select a country…</option>' +
-    list.map(c => `<option value="${c.cca3}">${escapeHtml(c.name)}</option>`).join('');
+// ------ All Countries rendering ------
+function getFilteredSortedCountries() {
+  const q = (els.countryFilter?.value || '').trim().toLowerCase();
+  const sort = els.countrySort?.value || 'name_asc';
+  let list = state.countries || [];
+  if (q) {
+    list = list.filter(c =>
+      (c.name || '').toLowerCase().includes(q) ||
+      (c.capital || '').toLowerCase().includes(q) ||
+      (c.region || '').toLowerCase().includes(q)
+    );
+  }
+  const dir = sort.endsWith('_desc') ? -1 : 1;
+  if (sort.startsWith('name')) list = list.slice().sort((a, b) => a.name.localeCompare(b.name) * dir);
+  else if (sort.startsWith('population')) list = list.slice().sort((a, b) => (a.population - b.population) * dir);
+  else if (sort.startsWith('area')) list = list.slice().sort((a, b) => (a.area - b.area) * dir);
+  return list;
+}
+
+function renderAllCountries() {
+  if (!els.countriesList) return;
+  const list = getFilteredSortedCountries();
+  if (!list.length) {
+    els.countriesList.innerHTML = '<li class="muted">No countries to show.</li>';
+    return;
+  }
+  els.countriesList.innerHTML = list.map(c => {
+    const pop = c.population ? formatNumber(c.population) : '—';
+    const area = c.area ? `${formatNumber(c.area)} km²` : '—';
+    const cap = c.capital || '—';
+    return `<li>
+      <strong>${escapeHtml(c.name)}</strong> — <span class="muted">${escapeHtml(c.officialName)}</span><br>
+      <span class="muted">Capital:</span> ${escapeHtml(cap)} · <span class="muted">Region:</span> ${escapeHtml(c.region || '—')} · <span class="muted">Subregion:</span> ${escapeHtml(c.subregion || '—')}<br>
+      <span class="muted">Population:</span> ${pop} · <span class="muted">Area:</span> ${area} · <span class="muted">Code:</span> ${escapeHtml(c.cca3 || '')}
+    </li>`;
+  }).join('');
 }
 
 function escapeHtml(str) {
@@ -295,23 +353,23 @@ function selectCountry(cca3) {
 }
 
 function bindEvents() {
-  els.countrySelect.addEventListener('change', e => {
-    const val = e.target.value;
-    if (val) selectCountry(val);
-  });
+  // filter/sort for all-countries
+  if (els.countryFilter) {
+    els.countryFilter.addEventListener('input', renderAllCountries);
+    els.countryFilter.addEventListener('change', renderAllCountries);
+  }
+  if (els.countrySort) {
+    els.countrySort.addEventListener('change', renderAllCountries);
+  }
   els.refreshBtn.addEventListener('click', async () => {
     localStorage.removeItem('countries_list_v3');
     await loadCountries();
-    if (state.selected) selectCountry(state.selected.cca3);
   });
   els.themeToggle.addEventListener('click', () => {
     document.documentElement.classList.toggle('light');
   });
   els.exportCsvBtn.addEventListener('click', () => exportCSV());
   els.exportPdfBtn.addEventListener('click', () => exportPDF());
-  if (els.bulkExportOpen) {
-    els.bulkExportOpen.addEventListener('click', () => openBulkPanel());
-  }
   if (els.bulkClose) {
     els.bulkClose.addEventListener('click', () => closeBulkPanel());
   }
@@ -573,54 +631,56 @@ async function getLatLngFallback(country) {
 }
 
 // Export functions
-function collectOverviewData() {
-  if (!state.selected) return null;
-  const c = state.selected;
-  return {
+function collectAllCountriesRows() {
+  const list = getFilteredSortedCountries();
+  return list.map(c => ({
     Name: c.officialName || c.name,
+    CommonName: c.name || '',
     Capital: c.capital || '',
     Region: c.region || '',
     Subregion: c.subregion || '',
     Population: c.population || '',
     Area_km2: c.area || '',
-    Languages: c.languages && Object.values(c.languages).join(', '),
-    Currencies: c.currencies && Object.values(c.currencies).map(x => `${x.name} (${x.symbol || ''})`).join(', '),
     Code: c.cca3 || '',
-  };
+  }));
 }
 
 function exportCSV() {
-  const data = collectOverviewData();
-  if (!data) return alert('Please select a country first.');
-  const headers = Object.keys(data);
-  const values = headers.map(h => JSON.stringify(data[h] ?? ''));
-  const csv = headers.join(',') + '\n' + values.join(',');
+  const rows = collectAllCountriesRows();
+  if (!rows.length) return alert('No countries to export.');
+  const headers = Object.keys(rows[0]);
+  const csv = [headers.join(',')]
+    .concat(rows.map(r => headers.map(h => JSON.stringify(r[h] ?? '')).join(',')))
+    .join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `${state.selected.name}_details.csv`;
+  a.download = `all_countries.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
 
 function exportPDF() {
-  const data = collectOverviewData();
-  if (!data) return alert('Please select a country first.');
+  const rows = collectAllCountriesRows();
+  if (!rows.length) return alert('No countries to export.');
   try {
     // jsPDF UMD
     const { jsPDF } = window.jspdf || {};
     if (!jsPDF) throw new Error('jsPDF not loaded');
     const doc = new jsPDF();
     doc.setFontSize(14);
-    doc.text(`Country Details: ${state.selected.name}`, 10, 15);
+    doc.text(`All Countries`, 10, 15);
     doc.setFontSize(11);
     let y = 25;
-    Object.entries(data).forEach(([k, v]) => {
-      doc.text(`${k}: ${v ?? ''}`, 10, y);
-      y += 7;
+    rows.forEach((data, idx) => {
+      if (idx > 0) { doc.addPage(); y = 25; }
+      Object.entries(data).forEach(([k, v]) => {
+        doc.text(`${k}: ${v ?? ''}`, 10, y);
+        y += 7;
+      });
     });
-    doc.save(`${state.selected.name}_details.pdf`);
+    doc.save(`all_countries.pdf`);
   } catch (e) {
     console.warn('jsPDF export failed, using print fallback', e);
     window.print();
@@ -767,7 +827,10 @@ const strings = {
   en: {
     titleSite: 'Country Details Explorer',
     linkAbout: 'About',
-    labelSelectCountry: 'Select Country',
+    // all-countries view
+    titleAllCountries: 'All Countries',
+    labelCountryFilter: 'Filter',
+    labelCountrySort: 'Sort',
     titleOverview: 'Overview',
     titleGender: 'Population by Gender',
     titleInstitutions: 'Institutions (Universities)',
@@ -809,7 +872,10 @@ const strings = {
   ur: {
     titleSite: 'ملک کی تفصیلات ایکسپلورر',
     linkAbout: 'متعلق',
-    labelSelectCountry: 'ملک منتخب کریں',
+    // all-countries view
+    titleAllCountries: 'تمام ممالک',
+    labelCountryFilter: 'فلٹر',
+    labelCountrySort: 'ترتیب',
     titleOverview: 'خلاصہ',
     titleGender: 'آبادی (مرد/عورت)',
     titleInstitutions: 'ادارے (جامعات)',
@@ -851,7 +917,10 @@ const strings = {
   hi: {
     titleSite: 'देश विवरण एक्सप्लोरर',
     linkAbout: 'जानकारी',
-    labelSelectCountry: 'देश चुनें',
+    // all-countries view
+    titleAllCountries: 'सभी देश',
+    labelCountryFilter: 'फ़िल्टर',
+    labelCountrySort: 'क्रम',
     titleOverview: 'सारांश',
     titleGender: 'जनसंख्या (पुरुष/महिला)',
     titleInstitutions: 'संस्थान (विश्वविद्यालय)',
@@ -897,7 +966,9 @@ function setLanguage(lang) {
   const s = strings[state.lang];
   if (els.titleSite) els.titleSite.textContent = s.titleSite;
   if (els.linkAbout) els.linkAbout.textContent = s.linkAbout;
-  if (els.labelSelectCountry) els.labelSelectCountry.textContent = s.labelSelectCountry;
+  if (els.titleAllCountries) els.titleAllCountries.textContent = s.titleAllCountries;
+  if (els.labelCountryFilter) els.labelCountryFilter.textContent = s.labelCountryFilter;
+  if (els.labelCountrySort) els.labelCountrySort.textContent = s.labelCountrySort;
   if (els.titleOverview) els.titleOverview.textContent = s.titleOverview;
   if (els.titleGender) els.titleGender.textContent = s.titleGender;
   if (els.titleInstitutions) els.titleInstitutions.textContent = s.titleInstitutions;
